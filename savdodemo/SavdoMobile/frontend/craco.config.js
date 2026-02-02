@@ -1,5 +1,6 @@
 // craco.config.js
 const path = require("path");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 require("dotenv").config();
 
 // Check if we're in development/preview mode (not production build)
@@ -60,6 +61,22 @@ const webpackConfig = {
             '**/public/**',
         ],
       };
+
+      // Copy public HTML files to build directory
+      webpackConfig.plugins.push(
+        new CopyWebpackPlugin({
+          patterns: [
+            {
+              from: path.resolve(__dirname, 'public/pos.html'),
+              to: path.resolve(__dirname, 'build/pos.html'),
+            },
+            {
+              from: path.resolve(__dirname, 'public/receipt.html'),
+              to: path.resolve(__dirname, 'build/receipt.html'),
+            },
+          ],
+        })
+      );
 
       // Add health check plugin to webpack if enabled
       if (config.enableHealthCheck && healthPluginInstance) {

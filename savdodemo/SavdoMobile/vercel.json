@@ -3,5 +3,25 @@
   "outputDirectory": "frontend/build",
   "installCommand": "echo 'Using buildCommand npm install'",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "routes": [
+    {
+      "src": "/pos.html",
+      "dest": "/pos.html"
+    },
+    {
+      "src": "/receipt.html",
+      "dest": "/receipt.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
