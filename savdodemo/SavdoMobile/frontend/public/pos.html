@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Prestige.POS</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+  touch-action: pan-y;
+}
+
+/* CAMERA */
+#camera {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* TOP BAR */
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.status-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: rgba(0,255,136,0.15);
+  color: #00ff88;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* SCAN AREA */
+.scan-area {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  max-width: 340px;
+  aspect-ratio: 16/9;
+  z-index: 10;
+}
+
+.scan-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 2px solid #00ff88;
+  border-radius: 16px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.3), 0 0 40px rgba(0,255,136,0.4);
+}
+
+.corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #00ff88;
+}
+
+.corner.tl { top: -2px; left: -2px; border-right: 0; border-bottom: 0; border-radius: 16px 0 0 0; }
+.corner.tr { top: -2px; right: -2px; border-left: 0; border-bottom: 0; border-radius: 0 16px 0 0; }
+.corner.bl { bottom: -2px; left: -2px; border-right: 0; border-top: 0; border-radius: 0 0 0 16px; }
+.corner.br { bottom: -2px; right: -2px; border-left: 0; border-top: 0; border-radius: 0 0 16px 0; }
+
+.scan-line {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ff88, transparent);
+  box-shadow: 0 0 10px #00ff88;
+  animation: scan 2s ease-in-out infinite;
+}
+
+@keyframes scan {
+  0%, 100% { top: 10%; opacity: 0; }
+  50% { top: 50%; opacity: 1; }
+  100% { top: 90%; opacity: 0; }
+}
+
+.scan-hint {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
+
+/* FEEDBACK TOAST */
+.toast {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  max-width: 85%;
+  text-align: center;
+  border: 1px solid rgba(0,255,136,0.3);
+}
+
+.toast.show { opacity: 1; }
+.toast.success { background: rgba(0,255,136,0.2); border-color: #00ff88; }
+.toast.warning { background: rgba(255,159,10,0.2); border-color: #ff9f0a; }
+
+/* BOTTOM BAR */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  z-index: 100;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.bottom-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cart-btn {
+  flex: 2;
+  height: 54px;
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  border: none;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(0,255,136,0.3);
+  transition: transform 0.1s;
+}
+
+.cart-btn:active { transform: scale(0.97); }
+
+.summary-btn {
+  flex: 1;
+  height: 54px;
+  background: rgba(255,159,10,0.2);
+  border: 1px solid rgba(255,159,10,0.4);
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ff9f0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+
+.summary-btn:active { transform: scale(0.97); }
+
+.cart-badge {
+  background: rgba(0,0,0,0.3);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.manual-btn {
+  width: 100%;
+  height: 44px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+}
+
+.manual-btn:active { background: rgba(255,255,255,0.05); }
+
+/* CART MODAL */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 300;
+  display: none;
+  flex-direction: column;
+}
+
+.modal.show { display: flex; }
+
+.modal-header {
+  height: 56px;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.cart-item {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-code {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+}
+
+.item-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #00ff88;
+  margin-left: 12px;
+}
+
+.remove-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,59,48,0.15);
+  border: 1px solid rgba(255,59,48,0.3);
+  border-radius: 8px;
+  color: #ff3b30;
+  font-size: 18px;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255,255,255,0.4);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.modal-footer {
+  background: rgba(0,0,0,0.95);
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.total-price {
+  color: #00ff88;
+}
+
+.checkout-btn {
+  width: 100%;
+  height: 54px;
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  border: none;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #000;
+}
+
+.checkout-btn:disabled {
+  opacity: 0.5;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.3);
+}
+
+/* DAILY SUMMARY STYLES */
+.summary-hero {
+  background: linear-gradient(135deg, rgba(0,255,136,0.15) 0%, rgba(0,204,106,0.1) 100%);
+  border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.summary-date {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 8px;
+}
+
+.summary-amount {
+  font-size: 48px;
+  font-weight: 700;
+  color: #00ff88;
+  margin-bottom: 8px;
+}
+
+.summary-count {
+  font-size: 15px;
+  color: rgba(255,255,255,0.7);
+}
+
+.summary-section {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cash-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cash-label {
+  font-size: 16px;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.cash-input {
+  flex: 1;
+  height: 40px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #fff;
+  font-size: 16px;
+  text-align: center;
+}
+
+.cash-input:focus {
+  outline: none;
+  border-color: #00ff88;
+}
+
+.cash-result {
+  font-size: 16px;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: right;
+  color: #00ff88;
+}
+
+.cash-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.difference-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.difference-positive {
+  color: #00ff88;
+}
+
+.difference-negative {
+  color: #ff3b30;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 15px;
+}
+
+.stat-label {
+  color: rgba(255,255,255,0.6);
+}
+
+.stat-value {
+  font-weight: 600;
+}
+
+.comparison {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.comparison.positive {
+  background: rgba(0,255,136,0.15);
+  color: #00ff88;
+}
+
+.comparison.negative {
+  background: rgba(255,59,48,0.15);
+  color: #ff3b30;
+}
+
+.action-btn {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #000;
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+/* MANUAL INPUT MODAL */
+.input-modal {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  z-index: 400;
+  transform: translateY(100%);
+  transition: transform 0.3s;
+}
+
+.input-modal.show { transform: translateY(0); }
+
+.input-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.input-subtitle {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 20px;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.input-label .required {
+  color: #ff3b30;
+}
+
+.input-field {
+  width: 100%;
+  height: 50px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 0 16px;
+  color: #fff;
+  font-size: 16px;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #00ff88;
+  background: rgba(255,255,255,0.08);
+}
+
+.input-field:disabled {
+  opacity: 0.5;
+  background: rgba(255,255,255,0.02);
+}
+
+.input-field.error {
+  border-color: #ff3b30;
+}
+
+.btn-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-cancel, .btn-add {
+  flex: 1;
+  height: 50px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btn-cancel {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.btn-add {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #000;
+}
+
+.btn-add:disabled {
+  opacity: 0.4;
+  background: rgba(255,255,255,0.1);
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="logo">Prestige.POS</div>
+  <div class="status-badge" id="status">Hazır</div>
+</div>
+
+<!-- CAMERA -->
+<video id="camera" autoplay playsinline muted></video>
+
+<!-- SCAN AREA -->
+<div class="scan-area">
+  <div class="scan-frame">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div class="scan-line"></div>
+  </div>
+  <div class="scan-hint">Barkodu kameraya tutun</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar">
+  <div class="bottom-buttons">
+    <button class="cart-btn" id="cartBtn">
+      🛒 Sepet
+      <span class="cart-badge" id="cartBadge">0</span>
+    </button>
+    <button class="summary-btn" id="summaryBtn">
+      📊<br>Gün Sonu
+    </button>
+  </div>
+  <button class="manual-btn" id="manualBtn">Manuel Barkod Gir</button>
+</div>
+
+<!-- CART MODAL -->
+<div class="modal" id="cartModal">
+  <div class="modal-header">
+    <div class="modal-title">Sepet</div>
+    <button class="close-btn" id="closeCart">×</button>
+  </div>
+  <div class="modal-content" id="cartContent"></div>
+  <div class="modal-footer">
+    <div class="total-row">
+      <span>Toplam</span>
+      <span class="total-price" id="totalPrice">₺0.00</span>
+    </div>
+    <button class="checkout-btn" id="checkoutBtn">Ödeme Al</button>
+  </div>
+</div>
+
+<!-- DAILY SUMMARY MODAL -->
+<div class="modal" id="summaryModal">
+  <div class="modal-header">
+    <div class="modal-title">Gün Sonu</div>
+    <button class="close-btn" id="closeSummary">×</button>
+  </div>
+  <div class="modal-content" id="summaryContent">
+    <!-- Content populated by JS -->
+  </div>
+</div>
+
+<!-- RECEIPT SUMMARY MODAL -->
+<div class="modal" id="receiptModal">
+  <div class="modal-header">
+    <div class="modal-title">Fiş</div>
+  </div>
+  <div class="modal-content" style="padding: 20px;">
+    <!-- Receipt Summary -->
+    <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+      <div style="text-align: center; margin-bottom: 16px;">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;" id="receiptShopName">Prestige Market</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.6);" id="receiptDateTime">11.01.2026 — 18:42</div>
+      </div>
+      
+      <div style="border-top: 1px dashed rgba(255,255,255,0.2); border-bottom: 1px dashed rgba(255,255,255,0.2); padding: 12px 0; margin-bottom: 12px;" id="receiptItems">
+        <!-- Items populated by JS -->
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 700; margin-bottom: 8px;">
+        <span>Toplam:</span>
+        <span style="color: #00ff88;" id="receiptTotal">₺0.00</span>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.7);">
+        <span>Ödeme:</span>
+        <span id="receiptPayment">Nakit</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-footer" style="display: flex; flex-direction: column; gap: 12px;">
+    <button class="action-btn btn-secondary" id="showQrBtn" onclick="showQRFromReceipt()">
+      🧾 QR ile Fiş Göster
+    </button>
+    <button class="action-btn btn-primary" onclick="startNewSale()">
+      ✅ Yeni Satış
+    </button>
+  </div>
+</div>
+
+<!-- QR CODE MODAL -->
+<div class="modal" id="qrModal">
+  <div class="modal-header">
+    <div class="modal-title">QR Fiş</div>
+    <button class="close-btn" id="closeQr">×</button>
+  </div>
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
+    <div style="background: #fff; padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+      <div id="qrcode"></div>
+    </div>
+    <div style="text-align: center; color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 20px;">
+      Müşteri bu QR'ı taratabilir
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="action-btn btn-primary" onclick="startNewSale()">
+      ✅ Yeni Satış
+    </button>
+  </div>
+</div>
+
+<!-- MANUAL BARCODE MODAL -->
+<div class="input-modal" id="inputModal">
+  <div class="input-title">Manuel Barkod</div>
+  <div class="input-subtitle">Barkod numarasını girin</div>
+  <div class="input-group">
+    <input type="tel" class="input-field" id="barcodeInput" placeholder="Barkod numarası" autofocus>
+  </div>
+  <div class="btn-group">
+    <button class="btn-cancel" id="cancelInput">İptal</button>
+    <button class="btn-add" id="addManual">Tara</button>
+  </div>
+</div>
+
+<!-- PAYMENT SELECTION MODAL -->
+<div class="input-modal" id="paymentModal">
+  <div class="input-title">Ödeme Şekli</div>
+  <div class="input-subtitle" id="paymentTotal">₺0.00</div>
+  
+  <button class="action-btn btn-primary" id="paymentCash" style="margin-bottom: 12px;">
+    💵 Nakit
+  </button>
+  
+  <button class="action-btn btn-primary" id="paymentCard" style="margin-bottom: 12px;">
+    💳 Kart
+  </button>
+  
+  <button class="action-btn btn-secondary" id="cancelPayment">
+    İptal
+  </button>
+</div>
+
+<!-- QUICK ADD PRODUCT MODAL -->
+<div class="input-modal" id="quickAddModal">
+  <div class="input-title">Ürün Bulunamadı</div>
+  <div class="input-subtitle">Hızlı ürün ekle</div>
+  
+  <div class="input-group">
+    <label class="input-label">Barkod</label>
+    <input type="text" class="input-field" id="quickBarcode" disabled>
+  </div>
+  
+  <div class="input-group">
+    <label class="input-label">Fiyat <span class="required">*</span></label>
+    <input type="number" step="0.01" class="input-field" id="quickPrice" placeholder="0.00" inputmode="decimal" autofocus>
+  </div>
+  
+  <div class="input-group">
+    <label class="input-label">Ürün Adı (opsiyonel)</label>
+    <input type="text" class="input-field" id="quickName" placeholder="Ürün adı girebilirsiniz">
+  </div>
+  
+  <div class="btn-group">
+    <button class="btn-cancel" id="cancelQuickAdd">İptal</button>
+    <button class="btn-add" id="saveQuickAdd">Kaydet ve Ekle</button>
+  </div>
+</div>
+
+<!-- CONFIRM DAY CLOSE MODAL -->
+<div class="modal" id="confirmCloseModal" style="display: none;">
+  <div class="modal-header">
+    <div class="modal-title">⚠️ Gün Kapatma Onayı</div>
+  </div>
+  <div class="modal-content" style="padding: 24px;">
+    <div style="font-size: 16px; margin-bottom: 20px; line-height: 1.6;">
+      Günü kapatmak üzeresiniz.
+    </div>
+    
+    <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+      <div id="confirmDayStats"></div>
+    </div>
+    
+    <div style="color: #ff9f0a; font-size: 14px; text-align: center; margin-bottom: 20px;">
+      ⚠️ Bu işlem geri alınamaz.
+    </div>
+  </div>
+  <div class="modal-footer" style="display: flex; gap: 12px;">
+    <button class="action-btn btn-secondary" onclick="cancelDayClose()" style="flex: 1;">
+      ❌ Vazgeç
+    </button>
+    <button class="action-btn btn-primary" onclick="confirmDayClose()" style="flex: 1;">
+      ✅ Günü Kapat
+    </button>
+  </div>
+</div>
+
+<!-- DAY CLOSED SUCCESS MODAL -->
+<div class="modal" id="dayClosedModal" style="display: none;">
+  <div class="modal-header">
+    <div class="modal-title">✅ Gün Başarıyla Kapatıldı</div>
+  </div>
+  <div class="modal-content" style="padding: 24px;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+      <div style="font-size: 18px; font-weight: 700; color: #00ff88; margin-bottom: 8px;">
+        Gün Başarılı Şekilde Kapatıldı
+      </div>
+      <div style="font-size: 14px; color: rgba(255,255,255,0.6);" id="closedDayDate">
+        01.02.2026
+      </div>
+    </div>
+    
+    <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+      <div id="closedDayStats"></div>
+    </div>
+  </div>
+  <div class="modal-footer" style="display: flex; flex-direction: column; gap: 12px;">
+    <button class="action-btn btn-primary" onclick="startNewDay()">
+      ➕ Yeni Gün Başlat
+    </button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ========================================
+// DATABASE (IndexedDB) - Version 2
+// ========================================
+const DB_NAME = 'PrestigePOS';
+const DB_VERSION = 2;
+let db;
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+    
+    request.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      const oldVersion = e.oldVersion;
+      
+      // Store 1: Products
+      if (!database.objectStoreNames.contains('products')) {
+        const productStore = database.createObjectStore('products', { keyPath: 'barcode' });
+        productStore.createIndex('name', 'name', { unique: false });
+      }
+      
+      // Store 2: Transactions (renamed from 'sales')
+      if (!database.objectStoreNames.contains('transactions')) {
+        const txStore = database.createObjectStore('transactions', { keyPath: 'id', autoIncrement: true });
+        txStore.createIndex('businessDate', 'businessDate', { unique: false });
+        txStore.createIndex('timestamp', 'timestamp', { unique: false });
+        txStore.createIndex('paymentType', 'paymentType', { unique: false });
+        txStore.createIndex('closedDayId', 'closedDayId', { unique: false });
+      } else if (oldVersion < 2) {
+        // Migrate old 'sales' to 'transactions' with new fields
+        const txStore = e.currentTarget.transaction.objectStore('transactions');
+        if (!txStore.indexNames.contains('businessDate')) {
+          txStore.createIndex('businessDate', 'businessDate', { unique: false });
+        }
+        if (!txStore.indexNames.contains('paymentType')) {
+          txStore.createIndex('paymentType', 'paymentType', { unique: false });
+        }
+        if (!txStore.indexNames.contains('closedDayId')) {
+          txStore.createIndex('closedDayId', 'closedDayId', { unique: false });
+        }
+      }
+      
+      // Store 3: Closed Days (NEW)
+      if (!database.objectStoreNames.contains('closedDays')) {
+        const closedDaysStore = database.createObjectStore('closedDays', { keyPath: 'id', autoIncrement: true });
+        closedDaysStore.createIndex('businessDate', 'businessDate', { unique: true });
+        closedDaysStore.createIndex('closedAt', 'closedAt', { unique: false });
+      }
+      
+      // Store 4: Settings (NEW)
+      if (!database.objectStoreNames.contains('settings')) {
+        const settingsStore = database.createObjectStore('settings', { keyPath: 'key' });
+      }
+    };
+  });
+}
+
+function getProduct(barcode) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['products'], 'readonly');
+    const store = transaction.objectStore('products');
+    const request = store.get(barcode);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function addProduct(product) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['products'], 'readwrite');
+    const store = transaction.objectStore('products');
+    const request = store.put(product);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ========================================
+// BUSINESS DAY LOGIC
+// ========================================
+
+function getCurrentBusinessDate() {
+  // Get current active business date from localStorage
+  let stored = localStorage.getItem('currentBusinessDate');
+  
+  // If exists, return it
+  if (stored) {
+    return stored;
+  }
+  
+  // No active day - create new one (today's date)
+  const today = getTodayDateStr();
+  localStorage.setItem('currentBusinessDate', today);
+  console.log('New business day created:', today);
+  return today;
+}
+
+function clearCurrentBusinessDate() {
+  localStorage.removeItem('currentBusinessDate');
+  console.log('Business date cleared');
+}
+
+async function isBusinessDateClosed(dateStr) {
+  const closedDay = await getClosedDayByDate(dateStr);
+  return closedDay !== null;
+}
+
+// ========================================
+// TRANSACTIONS (formerly 'sales')
+// ========================================
+
+function saveTransaction(transaction) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['transactions'], 'readwrite');
+    const store = tx.objectStore('transactions');
+    const request = store.add(transaction);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getTransactionsByBusinessDate(dateStr) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['transactions'], 'readonly');
+    const store = transaction.objectStore('transactions');
+    const index = store.index('businessDate');
+    const request = index.getAll(dateStr);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getAllTransactions() {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['transactions'], 'readonly');
+    const store = transaction.objectStore('transactions');
+    const request = store.getAll();
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function updateTransaction(id, updates) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['transactions'], 'readwrite');
+    const store = transaction.objectStore('transactions');
+    const getRequest = store.get(id);
+    
+    getRequest.onsuccess = () => {
+      const record = getRequest.result;
+      Object.assign(record, updates);
+      const updateRequest = store.put(record);
+      updateRequest.onsuccess = () => resolve(record);
+      updateRequest.onerror = () => reject(updateRequest.error);
+    };
+    getRequest.onerror = () => reject(getRequest.error);
+  });
+}
+
+// ========================================
+// CLOSED DAYS
+// ========================================
+
+function saveClosedDay(closedDay) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['closedDays'], 'readwrite');
+    const store = transaction.objectStore('closedDays');
+    const request = store.add(closedDay);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getClosedDayByDate(dateStr) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['closedDays'], 'readonly');
+    const store = transaction.objectStore('closedDays');
+    const index = store.index('businessDate');
+    const request = index.get(dateStr);
+    
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getAllClosedDays() {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['closedDays'], 'readonly');
+    const store = transaction.objectStore('closedDays');
+    const request = store.getAll();
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ========================================
+// SETTINGS
+// ========================================
+
+function getSetting(key) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['settings'], 'readonly');
+    const store = transaction.objectStore('settings');
+    const request = store.get(key);
+    
+    request.onsuccess = () => resolve(request.result?.value || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function setSetting(key, value) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['settings'], 'readwrite');
+    const store = transaction.objectStore('settings');
+    const request = store.put({ key, value });
+    
+    request.onsuccess = () => resolve(value);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Seed sample products
+async function seedProducts() {
+  const samples = [
+    { barcode: '8690504078006', name: 'Coca Cola 1L', price: 15.00, stock: 100 },
+    { barcode: '5449000000996', name: 'Fanta 1L', price: 14.00, stock: 50 },
+    { barcode: '8690504078013', name: 'Coca Cola 2.5L', price: 35.00, stock: 30 },
+    { barcode: '8690504001015', name: 'Sprite 1L', price: 14.00, stock: 40 },
+    { barcode: '8690632007076', name: 'Ülker Çikolata', price: 8.50, stock: 200 }
+  ];
+  
+  for (const product of samples) {
+    const exists = await getProduct(product.barcode);
+    if (!exists) await addProduct(product);
+  }
+}
+
+// ========================================
+// UTILITY FUNCTIONS
+// ========================================
+function getTodayDateStr() {
+  const today = new Date();
+  return today.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+function getYesterdayDateStr() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday.toISOString().split('T')[0];
+}
+
+function formatTurkishDate(dateStr) {
+  const date = new Date(dateStr);
+  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+// ========================================
+// STATE
+// ========================================
+let cart = []; // Array of {barcode, name, price, quantity}
+let scanLocked = false;
+let codeReader = null;
+let pendingSaleTotal = 0; // For payment modal
+let cashCounts = { 200: 0, 100: 0, 50: 0, 20: 0, coins: 0 };
+
+// Audio beep
+let beepAudio = null;
+function initBeep() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  beepAudio = audioContext;
+}
+
+function playBeep() {
+  if (!beepAudio) return;
+  const oscillator = beepAudio.createOscillator();
+  const gainNode = beepAudio.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(beepAudio.destination);
+  
+  oscillator.frequency.value = 800;
+  oscillator.type = 'sine';
+  
+  gainNode.gain.setValueAtTime(0.3, beepAudio.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, beepAudio.currentTime + 0.1);
+  
+  oscillator.start(beepAudio.currentTime);
+  oscillator.stop(beepAudio.currentTime + 0.1);
+}
+
+// ========================================
+// UI ELEMENTS
+// ========================================
+const video = document.getElementById('camera');
+const status = document.getElementById('status');
+const toast = document.getElementById('toast');
+const cartBtn = document.getElementById('cartBtn');
+const cartBadge = document.getElementById('cartBadge');
+const summaryBtn = document.getElementById('summaryBtn');
+const cartModal = document.getElementById('cartModal');
+const summaryModal = document.getElementById('summaryModal');
+const closeCart = document.getElementById('closeCart');
+const closeSummary = document.getElementById('closeSummary');
+const cartContent = document.getElementById('cartContent');
+const summaryContent = document.getElementById('summaryContent');
+const totalPrice = document.getElementById('totalPrice');
+const checkoutBtn = document.getElementById('checkoutBtn');
+const manualBtn = document.getElementById('manualBtn');
+const inputModal = document.getElementById('inputModal');
+const barcodeInput = document.getElementById('barcodeInput');
+const cancelInput = document.getElementById('cancelInput');
+const addManual = document.getElementById('addManual');
+const quickAddModal = document.getElementById('quickAddModal');
+const quickBarcode = document.getElementById('quickBarcode');
+const quickPrice = document.getElementById('quickPrice');
+const quickName = document.getElementById('quickName');
+const cancelQuickAdd = document.getElementById('cancelQuickAdd');
+const saveQuickAdd = document.getElementById('saveQuickAdd');
+
+// Payment modal elements
+const paymentModal = document.getElementById('paymentModal');
+const paymentTotal = document.getElementById('paymentTotal');
+const paymentCash = document.getElementById('paymentCash');
+const paymentCard = document.getElementById('paymentCard');
+const cancelPayment = document.getElementById('cancelPayment');
+
+// Receipt modal elements
+const receiptModal = document.getElementById('receiptModal');
+const qrModal = document.getElementById('qrModal');
+const closeQr = document.getElementById('closeQr');
+const receiptAmount = document.getElementById('receiptAmount');
+const receiptPayment = document.getElementById('receiptPayment');
+let currentTransaction = null; // Store for QR generation
+
+// ========================================
+// UI FUNCTIONS
+// ========================================
+function showToast(message, type = 'success') {
+  toast.textContent = message;
+  toast.className = `toast show ${type}`;
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function vibrate() {
+  if (navigator.vibrate) navigator.vibrate(50);
+}
+
+function updateCartUI() {
+  // Calculate total items
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  cartBadge.textContent = totalItems;
+  
+  if (cart.length === 0) {
+    cartContent.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🛒</div>
+        <div>Sepet boş</div>
+      </div>
+    `;
+    totalPrice.textContent = '₺0.00';
+    checkoutBtn.disabled = true;
+    return;
+  }
+  
+  cartContent.innerHTML = cart.map((item, index) => `
+    <div class="cart-item">
+      <div class="item-info">
+        <div class="item-name">${item.name}</div>
+        <div class="item-code">${item.barcode}</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 4px;">
+          <button onclick="decreaseQuantity(${index})" style="width: 32px; height: 32px; border: none; background: rgba(255,255,255,0.1); color: #fff; border-radius: 6px; font-size: 18px; font-weight: 700; cursor: pointer;">−</button>
+          <span style="min-width: 24px; text-align: center; font-weight: 600;">${item.quantity}</span>
+          <button onclick="increaseQuantity(${index})" style="width: 32px; height: 32px; border: none; background: rgba(0,255,136,0.2); color: #00ff88; border-radius: 6px; font-size: 18px; font-weight: 700; cursor: pointer;">+</button>
+        </div>
+        <div class="item-price">₺${(item.price * item.quantity).toFixed(2)}</div>
+        <button class="remove-btn" onclick="removeFromCart(${index})">×</button>
+      </div>
+    </div>
+  `).join('');
+  
+  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  totalPrice.textContent = `₺${total.toFixed(2)}`;
+  checkoutBtn.disabled = false;
+}
+
+function increaseQuantity(index) {
+  cart[index].quantity += 1;
+  updateCartUI();
+  vibrate();
+}
+
+function decreaseQuantity(index) {
+  if (cart[index].quantity > 1) {
+    cart[index].quantity -= 1;
+    updateCartUI();
+    vibrate();
+  } else {
+    removeFromCart(index);
+  }
+}
+
+function removeFromCart(index) {
+  cart.splice(index, 1);
+  updateCartUI();
+  vibrate();
+}
+
+// ========================================
+// DAILY SUMMARY FUNCTIONS
+// ========================================
+async function renderDailySummary() {
+  const businessDate = getCurrentBusinessDate();
+  
+  // Get today's UNCLOSED transactions only
+  const allTodayTx = await getTransactionsByBusinessDate(businessDate);
+  const todayTx = allTodayTx.filter(tx => !tx.closedDayId);
+  
+  // Calculate today's stats
+  const todayTotal = todayTx.reduce((sum, tx) => sum + tx.total, 0);
+  const todayCount = todayTx.length;
+  
+  // Calculate cash and card totals
+  const todayCashTotal = todayTx
+    .filter(tx => tx.paymentType === 'cash')
+    .reduce((sum, tx) => sum + tx.total, 0);
+  const todayCardTotal = todayTx
+    .filter(tx => tx.paymentType === 'card')
+    .reduce((sum, tx) => sum + tx.total, 0);
+  
+  const todayCashCount = todayTx.filter(tx => tx.paymentType === 'cash').length;
+  const todayCardCount = todayTx.filter(tx => tx.paymentType === 'card').length;
+  
+  // Store cash total for comparison
+  window.posCashTotal = todayCashTotal;
+  
+  summaryContent.innerHTML = `
+    <div class="summary-hero">
+      <div class="summary-date">${formatTurkishDate(businessDate)}</div>
+      <div class="summary-amount">₺${todayTotal.toFixed(2)}</div>
+      <div class="summary-count">${todayCount} satış</div>
+    </div>
+    
+    <div class="summary-section">
+      <div class="section-title">💳 Ödeme Dağılımı</div>
+      
+      <div class="stat-row">
+        <span class="stat-label">Nakit</span>
+        <span class="stat-value">₺${todayCashTotal.toFixed(2)} (${todayCashCount})</span>
+      </div>
+      
+      <div class="stat-row">
+        <span class="stat-label">Kart</span>
+        <span class="stat-value">₺${todayCardTotal.toFixed(2)} (${todayCardCount})</span>
+      </div>
+    </div>
+    
+    <div class="summary-section">
+      <div class="section-title">💵 Kasa Sayımı</div>
+      
+      <div class="stat-row" style="margin-bottom: 12px;">
+        <span class="stat-label">POS Nakit:</span>
+        <span class="stat-value" style="color: #00ff88;">₺${todayCashTotal.toFixed(2)}</span>
+      </div>
+      
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+          Kasadaki Toplam Nakit (₺):
+        </label>
+        <input 
+          type="number" 
+          id="kasaToplam" 
+          class="input-field" 
+          placeholder="0.00" 
+          step="0.01"
+          inputmode="decimal"
+          oninput="checkKasaFarki()"
+          style="height: 50px; font-size: 18px; text-align: center; font-weight: 600;"
+        >
+      </div>
+      
+      <div id="kasaFarkiResult" style="display: none; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600;">
+      </div>
+    </div>
+    
+    <div style="padding: 16px;">
+      <button class="action-btn btn-primary" onclick="closeDaySummary()">
+        ✓ Günü Kapat
+      </button>
+      <button class="action-btn btn-secondary" onclick="closeSummaryAndResume()">
+        ← Geri
+      </button>
+    </div>
+  `;
+}
+
+function checkKasaFarki() {
+  const kasaToplam = parseFloat(document.getElementById('kasaToplam').value) || 0;
+  const posNakit = window.posCashTotal || 0;
+  const fark = kasaToplam - posNakit;
+  
+  const resultDiv = document.getElementById('kasaFarkiResult');
+  
+  if (kasaToplam > 0 || document.getElementById('kasaToplam').value !== '') {
+    resultDiv.style.display = 'block';
+    
+    if (Math.abs(fark) < 0.01) {
+      resultDiv.style.background = 'rgba(0,255,136,0.15)';
+      resultDiv.style.color = '#00ff88';
+      resultDiv.textContent = '🟢 Kasa Uyumlu';
+    } else if (fark > 0) {
+      resultDiv.style.background = 'rgba(0,255,136,0.15)';
+      resultDiv.style.color = '#00ff88';
+      resultDiv.textContent = `🟢 ₺${fark.toFixed(2)} Fazla`;
+    } else {
+      resultDiv.style.background = 'rgba(255,59,48,0.15)';
+      resultDiv.style.color = '#ff3b30';
+      resultDiv.textContent = `🔴 ₺${Math.abs(fark).toFixed(2)} Eksik`;
+    }
+    
+    // Store for saving
+    window.kasaFarki = fark;
+    window.kasaToplam = kasaToplam;
+  } else {
+    resultDiv.style.display = 'none';
+    window.kasaFarki = null;
+    window.kasaToplam = null;
+  }
+}
+
+function closeSummaryAndResume() {
+  summaryModal.classList.remove('show');
+  resumeScanner();
+}
+
+async function closeDaySummary() {
+  const businessDate = getCurrentBusinessDate();
+  
+  // Get all UNCLOSED transactions for this business date
+  const allTx = await getTransactionsByBusinessDate(businessDate);
+  const transactions = allTx.filter(tx => !tx.closedDayId);
+  
+  // Validate: Don't allow closing empty day
+  if (transactions.length === 0) {
+    showToast('Bugün hiç satış yapılmadı', 'warning');
+    return;
+  }
+  
+  // Calculate totals
+  const totalSales = transactions.reduce((sum, tx) => sum + tx.total, 0);
+  const cashTotal = transactions.filter(tx => tx.paymentType === 'cash')
+                                .reduce((sum, tx) => sum + tx.total, 0);
+  const cardTotal = transactions.filter(tx => tx.paymentType === 'card')
+                                .reduce((sum, tx) => sum + tx.total, 0);
+  const transactionCount = transactions.length;
+  const totalItemsSold = transactions.reduce((sum, tx) => sum + tx.itemCount, 0);
+  
+  // Store for confirmation and success screen
+  window.pendingDayClose = {
+    businessDate,
+    totalSales,
+    cashTotal,
+    cardTotal,
+    transactionCount,
+    totalItemsSold,
+    transactions
+  };
+  
+  // Show custom confirmation modal
+  document.getElementById('confirmDayStats').innerHTML = `
+    <div style="font-size: 15px; line-height: 1.8;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>• Toplam Satış:</span>
+        <span style="font-weight: 700;">₺${totalSales.toFixed(2)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>• Nakit:</span>
+        <span style="font-weight: 700;">₺${cashTotal.toFixed(2)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>• Kart:</span>
+        <span style="font-weight: 700;">₺${cardTotal.toFixed(2)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>• İşlem Sayısı:</span>
+        <span style="font-weight: 700;">${transactionCount}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>• Satılan Ürün:</span>
+        <span style="font-weight: 700;">${totalItemsSold} adet</span>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('confirmCloseModal').style.display = 'flex';
+}
+
+function cancelDayClose() {
+  document.getElementById('confirmCloseModal').style.display = 'none';
+  window.pendingDayClose = null;
+}
+
+async function confirmDayClose() {
+  const data = window.pendingDayClose;
+  if (!data) return;
+  
+  // Get closing time
+  const closedAtDate = new Date();
+  
+  const closedDay = {
+    businessDate: data.businessDate,
+    totalSales: data.totalSales,
+    cashTotal: data.cashTotal,
+    cardTotal: data.cardTotal,
+    transactionCount: data.transactionCount,
+    totalItemsSold: data.totalItemsSold,
+    closedAt: closedAtDate.toISOString(),
+    closedAtTime: closedAtDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+  };
+  
+  try {
+    // Save closed day record
+    const closedDayId = await saveClosedDay(closedDay);
+    
+    // Mark all transactions as closed
+    for (const tx of data.transactions) {
+      await updateTransaction(tx.id, { closedDayId: closedDayId });
+    }
+    
+    // Clear business date - next action will create fresh day
+    localStorage.removeItem('currentBusinessDate');
+    
+    // Hide confirmation modal
+    document.getElementById('confirmCloseModal').style.display = 'none';
+    
+    // Hide summary modal
+    summaryModal.classList.remove('show');
+    
+    // Show success screen
+    showDayClosedSuccess(data);
+    
+  } catch (err) {
+    console.error('Close day error:', err);
+    showToast('Gün kapatılamadı', 'warning');
+  }
+}
+
+function showDayClosedSuccess(data) {
+  // Format date
+  const date = new Date(data.businessDate);
+  const dateStr = date.toLocaleDateString('tr-TR');
+  
+  document.getElementById('closedDayDate').textContent = dateStr;
+  document.getElementById('closedDayStats').innerHTML = `
+    <div style="font-size: 15px; line-height: 1.8;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>• Toplam Satış:</span>
+        <span style="font-weight: 700; color: #00ff88;">₺${data.totalSales.toFixed(2)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>• Nakit:</span>
+        <span style="font-weight: 700;">₺${data.cashTotal.toFixed(2)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>• Kart:</span>
+        <span style="font-weight: 700;">₺${data.cardTotal.toFixed(2)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>• İşlem Sayısı:</span>
+        <span style="font-weight: 700;">${data.transactionCount}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>• Satılan Ürün:</span>
+        <span style="font-weight: 700;">${data.totalItemsSold} adet</span>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('dayClosedModal').style.display = 'flex';
+}
+
+function startNewDay() {
+  // Close success modal
+  document.getElementById('dayClosedModal').style.display = 'none';
+  
+  // Clear any pending data
+  window.pendingDayClose = null;
+  
+  // CRITICAL: Create new business day
+  const newDayDate = getTodayDateStr();
+  localStorage.setItem('currentBusinessDate', newDayDate);
+  
+  // Resume scanner
+  resumeScanner();
+  
+  // Format date for display
+  const formattedDate = new Date(newDayDate).toLocaleDateString('tr-TR');
+  showToast(`Yeni gün başladı: ${formattedDate} ✅`, 'success');
+}
+
+function returnToScanner() {
+  summaryModal.classList.remove('show');
+  resumeScanner();
+  showToast('Yeni satış için hazır', 'success');
+}
+
+function closeSummaryModal() {
+  summaryModal.classList.remove('show');
+  resumeScanner();
+}
+
+// ========================================
+// SCANNING LOGIC
+// ========================================
+async function handleBarcode(barcode) {
+  if (scanLocked) return;
+  scanLocked = true;
+  
+  try {
+    let product = await getProduct(barcode);
+    
+    if (product) {
+      // Check if product already in cart
+      const existingIndex = cart.findIndex(item => item.barcode === barcode);
+      
+      if (existingIndex >= 0) {
+        // Product exists in cart - increase quantity
+        cart[existingIndex].quantity += 1;
+        showToast(`✓ ${product.name} (${cart[existingIndex].quantity}x)`, 'success');
+      } else {
+        // New product - add to cart with quantity 1
+        cart.push({ ...product, quantity: 1 });
+        showToast(`✓ ${product.name}`, 'success');
+      }
+      
+      // Beep + vibrate
+      playBeep();
+      vibrate();
+      updateCartUI();
+      
+      // Resume scanning after delay
+      setTimeout(() => scanLocked = false, 800);
+    } else {
+      // Product NOT found - open Quick Add modal
+      pauseScanner();
+      openQuickAddModal(barcode);
+      scanLocked = false;
+    }
+    
+  } catch (err) {
+    console.error('Scan error:', err);
+    showToast('Hata oluştu', 'warning');
+    setTimeout(() => scanLocked = false, 1000);
+  }
+}
+
+function pauseScanner() {
+  if (codeReader) {
+    codeReader.reset();
+  }
+}
+
+function resumeScanner() {
+  startScanner();
+}
+
+// ========================================
+// CAMERA SCANNER
+// ========================================
+async function startScanner() {
+  try {
+    status.textContent = 'Başlatılıyor...';
+    
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    });
+    
+    video.srcObject = stream;
+    
+    codeReader = new ZXing.BrowserMultiFormatReader();
+    
+    codeReader.decodeFromVideoDevice(
+      undefined,
+      video,
+      (result, err) => {
+        if (result) {
+          handleBarcode(result.text);
+        }
+      }
+    );
+    
+    status.textContent = 'Hazır';
+    
+  } catch (err) {
+    console.error('Camera error:', err);
+    status.textContent = 'Kamera hatası';
+    showToast('Kamera açılamadı', 'warning');
+  }
+}
+
+// ========================================
+// MANUAL BARCODE INPUT
+// ========================================
+manualBtn.onclick = () => {
+  pauseScanner();
+  inputModal.classList.add('show');
+  barcodeInput.value = '';
+  barcodeInput.focus();
+};
+
+cancelInput.onclick = () => {
+  inputModal.classList.remove('show');
+  resumeScanner();
+};
+
+addManual.onclick = () => {
+  const barcode = barcodeInput.value.trim();
+  if (barcode) {
+    inputModal.classList.remove('show');
+    handleBarcode(barcode);
+    resumeScanner();
+  }
+};
+
+barcodeInput.onkeypress = (e) => {
+  if (e.key === 'Enter') addManual.click();
+};
+
+// ========================================
+// QUICK ADD PRODUCT MODAL
+// ========================================
+function openQuickAddModal(barcode) {
+  quickBarcode.value = barcode;
+  quickPrice.value = '';
+  quickName.value = '';
+  quickAddModal.classList.add('show');
+  
+  setTimeout(() => quickPrice.focus(), 300);
+}
+
+function closeQuickAddModal() {
+  quickAddModal.classList.remove('show');
+  resumeScanner();
+}
+
+cancelQuickAdd.onclick = () => {
+  closeQuickAddModal();
+  showToast('İptal edildi', 'warning');
+};
+
+saveQuickAdd.onclick = async () => {
+  const barcode = quickBarcode.value.trim();
+  const price = parseFloat(quickPrice.value);
+  const name = quickName.value.trim();
+  
+  if (!price || price <= 0) {
+    quickPrice.classList.add('error');
+    showToast('Fiyat girilmeli', 'warning');
+    quickPrice.focus();
+    return;
+  }
+  
+  quickPrice.classList.remove('error');
+  
+  const newProduct = {
+    barcode: barcode,
+    name: name || `Ürün ${barcode.slice(-4)}`,
+    price: price,
+    stock: 999
+  };
+  
+  try {
+    await addProduct(newProduct);
+    cart.push({ ...newProduct, quantity: 1 });
+    updateCartUI();
+    closeQuickAddModal();
+    showToast(`✓ ${newProduct.name} eklendi`, 'success');
+    playBeep();
+    vibrate();
+  } catch (err) {
+    console.error('Quick add error:', err);
+    showToast('Kayıt hatası', 'warning');
+  }
+};
+
+quickPrice.onkeypress = (e) => {
+  if (e.key === 'Enter') quickName.focus();
+};
+
+quickName.onkeypress = (e) => {
+  if (e.key === 'Enter') saveQuickAdd.click();
+};
+
+// ========================================
+// CART MODAL
+// ========================================
+cartBtn.onclick = () => {
+  pauseScanner();
+  cartModal.classList.add('show');
+};
+
+closeCart.onclick = () => {
+  cartModal.classList.remove('show');
+  resumeScanner();
+};
+
+checkoutBtn.onclick = () => {
+  if (cart.length === 0) return;
+  
+  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  const itemCount = cart.length;
+  
+  // Store pending sale info
+  pendingSaleTotal = total;
+  
+  // Show payment modal
+  paymentTotal.textContent = `₺${total.toFixed(2)}`;
+  paymentModal.classList.add('show');
+};
+
+// ========================================
+// RECEIPT FUNCTIONS
+// ========================================
+
+async function showReceiptSummary(transaction) {
+  try {
+    // Populate receipt details
+    const shopName = await getSetting('shopName') || 'Prestige Market';
+    const date = new Date(transaction.timestamp);
+    const dateStr = date.toLocaleDateString('tr-TR');
+    const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    
+    // Update receipt elements
+    document.getElementById('receiptShopName').textContent = shopName;
+    document.getElementById('receiptDateTime').textContent = `${dateStr} — ${timeStr}`;
+    document.getElementById('receiptTotal').textContent = `₺${transaction.total.toFixed(2)}`;
+    document.getElementById('receiptPayment').textContent = transaction.paymentType === 'cash' ? '💵 Nakit' : '💳 Kart';
+    
+    // Populate items with quantities
+    const itemsContainer = document.getElementById('receiptItems');
+    itemsContainer.innerHTML = transaction.items.map(item => 
+      `<div style="display: flex; justify-content: space-between; padding: 4px 0;">
+        <span>${item.name} ${item.quantity > 1 ? `(x${item.quantity})` : ''}</span>
+        <span>₺${(item.price * item.quantity).toFixed(2)}</span>
+      </div>`
+    ).join('');
+    
+    // Show receipt modal
+    receiptModal.classList.add('show');
+    
+  } catch (err) {
+    console.error('Receipt summary error:', err);
+    showToast('Fiş gösterilemedi', 'warning');
+  }
+}
+
+// ========================================
+// QR AND NEW SALE FUNCTIONS
+// ========================================
+
+async function showQRFromReceipt() {
+  if (!currentTransaction) {
+    showToast('Fiş bulunamadı', 'warning');
+    return;
+  }
+  
+  try {
+    // Get shop name
+    const shopName = await getSetting('shopName') || 'Prestige Market';
+    
+    // Create self-contained receipt data (NO ID, NO database reference)
+    const date = new Date(currentTransaction.timestamp);
+    const receiptData = {
+      shop: shopName,
+      date: date.toLocaleDateString('tr-TR') + ' ' + date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      items: currentTransaction.items.map(item => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      total: currentTransaction.total,
+      payment: currentTransaction.paymentType === 'cash' ? 'Nakit' : 'Kart'
+    };
+    
+    // Encode data into URL
+    const encodedData = encodeURIComponent(JSON.stringify(receiptData));
+    const receiptUrl = `${window.location.origin}/receipt.html?data=${encodedData}`;
+    
+    // Clear previous QR
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '';
+    
+    // Generate QR code with self-contained URL
+    new QRCode(qrContainer, {
+      text: receiptUrl,
+      width: 250,
+      height: 250,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.L
+    });
+    
+    // Hide receipt and show QR
+    receiptModal.classList.remove('show');
+    qrModal.classList.add('show');
+    
+  } catch (err) {
+    console.error('QR generation error:', err);
+    showToast('QR oluşturulamadı', 'warning');
+  }
+}
+
+function startNewSale() {
+  // Clear current transaction
+  currentTransaction = null;
+  
+  // Clear cart
+  cart = [];
+  updateCartUI();
+  
+  // Close ALL modals
+  receiptModal.classList.remove('show');
+  qrModal.classList.remove('show');
+  cartModal.classList.remove('show');
+  paymentModal.classList.remove('show');
+  summaryModal.classList.remove('show');
+  
+  // Resume scanner
+  resumeScanner();
+  
+  showToast('Yeni satış için hazır', 'success');
+}
+
+function closeReceiptModal() {
+  receiptModal.classList.remove('show');
+  resumeScanner();
+}
+
+function closeQRModal() {
+  qrModal.classList.remove('show');
+}
+
+closeQr.onclick = closeQRModal;
+
+// ========================================
+// PAYMENT MODAL HANDLERS
+// ========================================
+cancelPayment.onclick = () => {
+  paymentModal.classList.remove('show');
+};
+
+paymentCash.onclick = () => {
+  completeSale('cash');
+};
+
+paymentCard.onclick = () => {
+  completeSale('card');
+};
+
+async function completeSale(paymentType) {
+  if (cart.length === 0) return;
+  
+  // Calculate total with quantities
+  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  
+  // Create transaction with all required fields
+  const transaction = {
+    businessDate: getCurrentBusinessDate(),
+    timestamp: new Date().toISOString(),
+    paymentType: paymentType,
+    items: cart.map(item => ({
+      barcode: item.barcode,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity
+    })),
+    total: total,
+    itemCount: totalItems,
+    closedDayId: null
+  };
+  
+  try {
+    // Save to IndexedDB and get the ID
+    const txId = await saveTransaction(transaction);
+    
+    // Store transaction with ID for QR generation
+    transaction.id = txId;
+    currentTransaction = transaction;
+    
+    // Clear cart NOW (before showing receipt)
+    cart = [];
+    updateCartUI();
+    
+    // Close payment and cart modals
+    paymentModal.classList.remove('show');
+    cartModal.classList.remove('show');
+    
+    // Show RECEIPT SUMMARY (not QR)
+    await showReceiptSummary(transaction);
+    
+    // Success toast
+    const paymentLabel = paymentType === 'cash' ? 'Nakit' : 'Kart';
+    showToast(`✓ Satış tamamlandı (${paymentLabel})`, 'success');
+    vibrate();
+    
+  } catch (err) {
+    console.error('Save transaction error:', err);
+    showToast('Satış kaydedilemedi', 'warning');
+  }
+}
+
+// ========================================
+// DAILY SUMMARY MODAL
+// ========================================
+summaryBtn.onclick = async () => {
+  pauseScanner();
+  summaryModal.classList.add('show');
+  await renderDailySummary();
+};
+
+closeSummary.onclick = () => {
+  summaryModal.classList.remove('show');
+  resumeScanner();
+};
+
+// ========================================
+// INIT
+// ========================================
+(async function init() {
+  await initDB();
+  
+  // Initialize default settings if first run
+  const shopName = await getSetting('shopName');
+  if (!shopName) {
+    await setSetting('shopName', 'Prestige Market');
+    await setSetting('currency', '₺');
+  }
+  
+  // Initialize beep audio
+  initBeep();
+  
+  await seedProducts();
+  await startScanner();
+  updateCartUI();
+})();
+
+// Expose for inline handlers
+window.removeFromCart = removeFromCart;
+window.increaseQuantity = increaseQuantity;
+window.decreaseQuantity = decreaseQuantity;
+window.closeDaySummary = closeDaySummary;
+window.closeSummaryAndResume = closeSummaryAndResume;
+window.cancelDayClose = cancelDayClose;
+window.confirmDayClose = confirmDayClose;
+window.startNewDay = startNewDay;
+window.returnToScanner = returnToScanner;
+window.showQRFromReceipt = showQRFromReceipt;
+window.startNewSale = startNewSale;
+</script>
+
+</body>
+</html>
